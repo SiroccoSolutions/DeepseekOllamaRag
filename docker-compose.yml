@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  deepseek-r1-rag:
+    build: .
+    container_name: deepseek-r1-rag
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data  # Persist PDFs, logs, etc.
+    command: >
+      bash -c "
+      ollama serve &
+      sleep 10 &&
+      ollama pull deepseek-r1:1.5b &&
+      streamlit run app.py --server.address=0.0.0.0
+      "
