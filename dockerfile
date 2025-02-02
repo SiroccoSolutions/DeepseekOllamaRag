@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y \
     cmake \
     clang \
     lld \
-    netcat  # Added for health checks
+    netcat \
+    libffi-dev \
+    openssh-client
 
 # Install Ollama using the official script
 RUN curl -fsSL https://ollama.com/install.sh | sh
