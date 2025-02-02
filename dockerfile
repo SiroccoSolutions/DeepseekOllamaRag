@@ -11,10 +11,15 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     cmake \
     clang \
-    lld
+    lld \
+    netcat  # Added for health checks
 
 # Install Ollama using the official script
 RUN curl -fsSL https://ollama.com/install.sh | sh
+
+# Add wait-for-it script
+ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
 
 # Set the working directory
 WORKDIR /app
@@ -32,5 +37,12 @@ COPY app.py .
 # Expose the Streamlit port
 EXPOSE 8501
 
-# Start Ollama, pull the DeepSeek R1 model, and run the Streamlit app
-CMD bash -c "ollama serve & sleep 10 && ollama pull deepseek-r1:1.5b && streamlit run app.py --server.address=0.0.0.0"
+# Health check for Ollama server
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD nc -z localhost 11434 || exit 1
+
+# Start services
+CMD bash -c "/wait-for-it.sh localhost:11434 --timeout=60 --strict -- \
+    ollama pull deepseek-r1 && \
+    streamlit run app.py --server.address=0.0.0.0 & \
+    ollama serve"
